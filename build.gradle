@@ -42,6 +42,46 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            name 'redhat-ga'
+            url 'https://maven.repository.redhat.com/ga/'
+        }
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                from components.java
+            }
+        }
+
+        repositories {
+            // publishing in PNC
+            if (System.getProperty('AProxDeployUrl') != null) {
+                maven {
+                    name = "PNC"
+                    url = System.getProperty('AProxDeployUrl')
+                    credentials(HttpHeaderCredentials) {
+                        name = "Authorization"
+                        value = "Bearer " + System.getProperty('accessToken')
+                    }
+                    authentication {
+                        header(HttpHeaderAuthentication)
+                    }
+                }
+            }
+        }
+    }
+}
+
 jar {
     from {
         configurations.bundleLib.collect { it.isDirectory() ? it : zipTree(it) }
